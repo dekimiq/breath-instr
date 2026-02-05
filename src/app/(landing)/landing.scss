@@ -1,0 +1,7 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as mix;
+
+section {
+  max-width: $landing-max-width;
+  padding: 0 40px;
+}
