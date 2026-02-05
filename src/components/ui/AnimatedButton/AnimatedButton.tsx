@@ -1,7 +1,9 @@
 'use client'
 
 import React from 'react'
+
 import { motion, MotionProps } from 'framer-motion'
+
 import styles from './AnimatedButton.module.scss'
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & MotionProps
