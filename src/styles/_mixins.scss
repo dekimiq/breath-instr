@@ -1,17 +1,26 @@
+@use 'variables' as *;
+
 @mixin flex-center {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-@mixin responsive($breakpoint) {
-  @if $breakpoint == mobile {
-    @media (max-width: 600px) {
+@mixin respond-to($breakpoint) {
+  $value: map-get($breakpoints, $breakpoint);
+
+  @if $value {
+    @media (max-width: $value) {
       @content;
     }
-  } @else if $breakpoint == tablet {
-    @media (max-width: 900px) {
-      @content;
-    }
+  } @else {
+    @warn "Брейкпоинт '#{$breakpoint}' не найден в списке.";
   }
 }
+
+// Use responsive mixin:
+//
+// @use "@/styles/mixins" as mix;
+// @include mix.respond-to("tablet") {
+//   ...
+//   }
