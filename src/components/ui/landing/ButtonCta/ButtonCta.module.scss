@@ -1,0 +1,11 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as mix;
+
+.btnCtaPrimary {
+  padding: 0.8rem 2rem;
+  transition: all 0.2s ease;
+
+  background: $primary-color;
+  color: $text-color-button;
+  box-shadow: 0 4px 14px rgba($primary-color, 0.3);
+}
