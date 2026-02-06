@@ -2,7 +2,10 @@ $primary-color: #0284c7;
 $secondary-color: #76e8cd;
 $background-color: #f8fafc;
 $accent-color: #ef7000;
-$text-color: #333;
+$text-color-primary: #333;
+$text-color-secondary: #4a4a4a;
+$text-color-button: #fff;
+$global-border-radius: 12px;
 $breakpoints: (
   'mobile': 600px,
   'tablet': 900px,
