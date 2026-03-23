@@ -18,7 +18,7 @@ const eslintConfig = [
       'import-helpers': importHelpers,
     },
     rules: {
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'off',
       // Unused Imports
