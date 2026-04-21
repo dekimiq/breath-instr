@@ -1,7 +1,11 @@
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as mix;
 
-section {
+section,
+header {
   max-width: $landing-max-width;
+}
+
+section {
   padding: 0 40px;
 }

@@ -1,0 +1,24 @@
+@use '@/styles/variables' as *;
+
+.navDesktop {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+
+  a {
+    color: $text-color-primary;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $primary-color;
+    }
+  }
+}
+
+@media (max-width: $tablet) {
+  .navDesktop {
+    display: none;
+  }
+}
