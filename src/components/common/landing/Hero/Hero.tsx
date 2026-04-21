@@ -7,7 +7,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import Image from 'next/image'
 
 import styles from '@/components/common/landing/Hero/Hero.module.scss'
-import ButtonCta from '@/components/ui/landing/ButtonCta/ButtonCta'
+import ButtonCta from '@/components/ui/ButtonCta/ButtonCta'
 
 const textsPage = {
   title: 'Дыхание как технология восстановления и управления',

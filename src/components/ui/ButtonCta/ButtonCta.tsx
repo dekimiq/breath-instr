@@ -2,7 +2,7 @@ import React from 'react'
 
 import { motion } from 'framer-motion'
 
-import styles from '@/components/ui/landing/ButtonCta/ButtonCta.module.scss'
+import styles from '@/components/ui/ButtonCta/ButtonCta.module.scss'
 
 interface ButtonProps {
   href: string
