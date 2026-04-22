@@ -23,41 +23,6 @@
   position: relative;
   z-index: 0;
 
-  // Базовая маска: Только снизу (работает на всех экранах)
-  // -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  // mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-
-  // Вариант 1: Растушевка с трех сторон (Лево, Право, Низ)
-  // -webkit-mask-image:
-  //   linear-gradient(to bottom, black 60%, transparent 100%),
-  //   linear-gradient(
-  //     to right,
-  //     transparent 0%,
-  //     black 15%,
-  //     black 85%,
-  //     transparent 100%
-  //   );
-  // mask-image:
-  //   linear-gradient(to bottom, black 60%, transparent 100%),
-  //   linear-gradient(
-  //     to right,
-  //     transparent 0%,
-  //     black 15%,
-  //     black 85%,
-  //     transparent 100%
-  //   );
-
-  // Вариант 2: Растушевка только Справа и Снизу (Слева четко)
-  // -webkit-mask-image:
-  //   linear-gradient(to bottom, black 60%, transparent 100%),
-  //   linear-gradient(to right, black 0%, black 85%, transparent 100%);
-  // mask-image:
-  //   linear-gradient(to bottom, black 60%, transparent 100%),
-  //   linear-gradient(to right, black 0%, black 85%, transparent 100%);
-
-  // -webkit-mask-composite: source-in;
-  // mask-composite: intersect;
-
   opacity: 1;
 }
 
@@ -102,6 +67,14 @@
     z-index: 2;
     text-align: center;
     align-items: center;
+
+    h1 {
+      font-weight: 600;
+    }
+
+    p {
+      font-weight: 600;
+    }
   }
 
   .parallaxWrapper {
@@ -110,6 +83,6 @@
     grid-row: 1;
     width: 100%;
     height: 90%;
-    opacity: 0.7;
+    opacity: 0.5;
   }
 }

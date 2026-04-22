@@ -1,0 +1,32 @@
+.footer {
+  padding: 40px;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.footerContainer {
+  display: inline-block;
+  min-width: 300px;
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .privacyLink {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: #475569;
+    text-decoration: none;
+    transition: color 0.2s;
+    border-bottom: 1px dashed transparent;
+
+    &:hover {
+      color: #0f172a;
+      border-bottom-color: #0f172a;
+    }
+  }
+}

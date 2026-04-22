@@ -1,0 +1,78 @@
+@use '@/styles/variables' as *;
+
+.mechanisms {
+  position: relative;
+  padding: 6rem 40px;
+  background: #f8fafc;
+  width: 100%;
+  max-width: $landing-max-width;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  .cardsGrid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2rem;
+    margin-bottom: 6rem;
+    align-items: stretch;
+    z-index: 2;
+  }
+}
+
+.mechanisms :global(.glass-card-wrapper) {
+  grid-column: span 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mechanisms :global(.glass-card-wrapper:nth-child(4)) {
+  grid-column: 2 / span 2;
+}
+
+.mechanisms :global(.glass-card-wrapper:nth-child(5)) {
+  grid-column: 4 / span 2;
+}
+
+.sideCard :global(.glass-card) {
+  margin-top: 4rem;
+  height: calc(100% - 4rem);
+}
+
+.centerCard :global(.glass-card) {
+  margin-bottom: 4rem;
+  height: calc(100% - 4rem);
+}
+
+@media (max-width: $tablet) {
+  .mechanisms {
+    .cardsGrid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      z-index: 2;
+    }
+  }
+
+  .mechanisms :global(.glass-card-wrapper) {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    grid-column: span 1;
+  }
+
+  .mechanisms :global(.glass-card-wrapper:nth-child(4)),
+  .mechanisms :global(.glass-card-wrapper:nth-child(5)) {
+    grid-column: span 1;
+  }
+
+  .sideCard :global(.glass-card),
+  .centerCard :global(.glass-card) {
+    margin-top: 0;
+    margin-bottom: 0;
+    height: 100%;
+  }
+}
