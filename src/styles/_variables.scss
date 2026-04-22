@@ -22,5 +22,14 @@ $font-family:
   Arial,
   sans-serif;
 
+// Breakpoints
+$mobile: 768px;
+$tablet: 1024px;
+$laptop: 1200px;
+$desktop: 1280px;
+
+// Layout
+$content-max-width: 1500px;
+
 // Landing personal
 $landing-max-width: 1500px;
