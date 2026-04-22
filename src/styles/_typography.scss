@@ -29,6 +29,12 @@
     color: $text-color-primary;
   }
 
+  header {
+    a {
+      border-bottom: 0;
+    }
+  }
+
   a {
     cursor: pointer;
     text-decoration: none;
