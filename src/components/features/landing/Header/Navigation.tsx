@@ -2,8 +2,9 @@
 
 import React from 'react'
 
-import { SCROLL_OFFSET } from './constants'
-import styles from './Navigation.module.scss'
+import styles from '@/components/features/landing/Header/Navigation.module.scss'
+
+import { useScrollTo } from '@/hooks/useScrollTo'
 
 interface Link {
   href: string
@@ -15,23 +16,14 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ links }) => {
+  const scrollTo = useScrollTo()
+
   const handleScroll = (
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string
   ) => {
     e.preventDefault()
-    const targetId = href.replace('#', '')
-    const element = document.getElementById(targetId)
-
-    if (element) {
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.scrollY - SCROLL_OFFSET
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      })
-    }
+    scrollTo(href)
   }
 
   return (

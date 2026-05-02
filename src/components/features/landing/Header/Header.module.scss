@@ -71,7 +71,7 @@
   font-size: 0.9rem !important;
 }
 
-@media (max-width: $tablet) {
+@media (max-width: $header-mobile-breakpoint) {
   .ctaWrapper {
     display: none;
   }

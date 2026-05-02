@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 
 import { X } from 'lucide-react'
 
-import { SCROLL_OFFSET } from './constants'
+import { useScrollTo } from '@/hooks/useScrollTo'
+
 import styles from './MobileMenu.module.scss'
 
 interface Link {
@@ -19,6 +20,7 @@ interface MobileMenuProps {
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ links }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const scrollTo = useScrollTo()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -48,20 +50,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ links }) => {
     e.preventDefault()
     closeMenu()
 
-    const targetId = href.replace('#', '')
-    const element = document.getElementById(targetId)
-
-    if (element) {
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.scrollY - SCROLL_OFFSET
-
-      setTimeout(() => {
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        })
-      }, 300)
-    }
+    setTimeout(() => {
+      scrollTo(href)
+    }, 300)
   }
 
   if (!mounted) return null

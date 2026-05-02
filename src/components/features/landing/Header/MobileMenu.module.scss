@@ -83,7 +83,7 @@
   }
 }
 
-@media (max-width: $tablet) {
+@media (max-width: $header-mobile-breakpoint) {
   .menuToggle {
     display: flex;
   }

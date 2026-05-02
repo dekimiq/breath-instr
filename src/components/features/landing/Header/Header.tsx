@@ -6,12 +6,16 @@ import Link from 'next/link'
 
 import ButtonCta from '@/components/ui/ButtonCta/ButtonCta'
 
+import { useScrollTo } from '@/hooks/useScrollTo'
+
 import { NAV_LINKS } from './constants'
 import styles from './Header.module.scss'
 import { MobileMenu } from './MobileMenu'
 import { Navigation } from './Navigation'
 
 export const Header: React.FC = () => {
+  const scrollTo = useScrollTo()
+
   return (
     <header className={styles.header}>
       <div className={styles.glassContainer}>
@@ -24,7 +28,14 @@ export const Header: React.FC = () => {
         <Navigation links={NAV_LINKS} />
 
         <div className={styles.ctaWrapper}>
-          <ButtonCta href="#contacts" className={styles.headerBtn}>
+          <ButtonCta
+            href="#contacts"
+            className={styles.headerBtn}
+            onClick={(e) => {
+              e.preventDefault()
+              scrollTo('contacts')
+            }}
+          >
             Записаться
           </ButtonCta>
         </div>

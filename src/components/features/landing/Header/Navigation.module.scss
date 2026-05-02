@@ -17,7 +17,7 @@
   }
 }
 
-@media (max-width: $tablet) {
+@media (max-width: $header-mobile-breakpoint) {
   .navDesktop {
     display: none;
   }

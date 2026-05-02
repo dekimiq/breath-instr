@@ -1,8 +1,10 @@
 export const NAV_LINKS = [
   { href: '#hero', label: 'Главная' },
-  { href: '#problems', label: 'Проблемы' },
-  { href: '#solution', label: 'Решение' },
-  { href: '#reviews', label: 'Отзывы' },
+  { href: '#problems', label: 'Проблематика' },
+  { href: '#mechanisms', label: 'Механизм' },
+  { href: '#results', label: 'Результаты' },
+  { href: '#about', label: 'Специалист' },
+  { href: '#faq', label: 'FAQ' },
   { href: '#contacts', label: 'Контакты' },
 ]
 
