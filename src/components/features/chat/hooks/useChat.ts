@@ -48,7 +48,10 @@ export const useChat = (_isOpen: boolean) => {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({
+          message: userMessage.content,
+          history: messages.slice(-4),
+        }),
       })
 
       if (!response.ok) {
@@ -57,8 +60,8 @@ export const useChat = (_isOpen: boolean) => {
           setIsBlocked(true)
           const reason =
             data.code === 'SESSION_LIMIT_REACHED'
-              ? 'Вы задали много вопросов. Еще больше о дыхании и практиках вы можете узнать на личной консультации.'
-              : 'Превышен лимит запросов. Пожалуйста, свяжитесь со мной напрямую для продолжения.'
+              ? 'Рады что вы интересуетесь этой темой. Еще больше о дыхании и практиках вы можете узнать у инструктора!)'
+              : 'Превышен лимит запросов. Пожалуйста, свяжитесь со мной напрямую для консультации.'
           setBlockReason(reason)
           return
         }
