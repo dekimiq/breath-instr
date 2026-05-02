@@ -20,6 +20,7 @@ export const SmoothScroll = ({ children }: { children: ReactNode }) => {
     })
 
     lenisRef.current = lenis
+    window.lenis = lenis
 
     function raf(time: number) {
       lenis.raf(time)
@@ -27,8 +28,17 @@ export const SmoothScroll = ({ children }: { children: ReactNode }) => {
     }
     requestAnimationFrame(raf)
 
-    return () => lenis.destroy()
+    return () => {
+      lenis.destroy()
+      window.lenis = undefined
+    }
   }, [])
 
   return <>{children}</>
+}
+
+declare global {
+  interface Window {
+    lenis?: Lenis
+  }
 }
