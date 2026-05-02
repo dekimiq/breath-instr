@@ -1,5 +1,7 @@
 import { SmoothScroll } from '@/providers/SmoothScroll'
 import type { Metadata } from 'next'
+
+import Chat from '@/components/features/chat/Chat'
 import '@/styles/globals.scss'
 
 export const metadata: Metadata = {
@@ -15,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SmoothScroll>{children}</SmoothScroll>
+        <SmoothScroll>
+          {children}
+          <Chat />
+        </SmoothScroll>
       </body>
     </html>
   )
