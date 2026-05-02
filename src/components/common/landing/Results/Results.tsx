@@ -11,9 +11,12 @@ import { AnimatedButton } from '@/components/ui/AnimatedButton/AnimatedButton'
 import GlassCard from '@/components/ui/GlassCard/GlassCard'
 import SectionHeader from '@/components/ui/SectionHeader/SectionHeader'
 
+import { useScrollTo } from '@/hooks/useScrollTo'
+
 import styles from './Results.module.scss'
 
 const Results: React.FC = () => {
+  const scrollTo = useScrollTo()
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -25,9 +28,15 @@ const Results: React.FC = () => {
   return (
     <section id="results" className={styles.results} ref={ref}>
       <div className="container">
-        <div className={styles.headerWrapper}>
+        <motion.div
+          className={styles.headerWrapper}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8 }}
+        >
           <SectionHeader title="Что получите на выходе" subtitle="Результаты" />
-        </div>
+        </motion.div>
       </div>
 
       <div className={styles.parallaxWrapper}>
@@ -47,7 +56,21 @@ const Results: React.FC = () => {
         </div>
 
         <div className="container">
-          <div className={styles.cardsGrid}>
+          <motion.div
+            className={styles.cardsGrid}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
             <GlassCard
               title="Контроль стресса"
               description="95% людей заметили снижение стресса за две недели практики."
@@ -71,20 +94,27 @@ const Results: React.FC = () => {
               delay="400"
               glowColor="blue"
             />
-          </div>
+          </motion.div>
         </div>
       </div>
 
       <div className="container">
-        <div
+        <motion.div
           className={styles.ctaWrapper}
-          data-aos="fade-up"
-          data-aos-delay="600"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <a href="#contacts">
-            <AnimatedButton>Попробовать уже сейчас!</AnimatedButton>
-          </a>
-        </div>
+          <AnimatedButton
+            onClick={(e) => {
+              e.preventDefault()
+              scrollTo('contacts')
+            }}
+          >
+            Попробовать уже сейчас!
+          </AnimatedButton>
+        </motion.div>
       </div>
     </section>
   )

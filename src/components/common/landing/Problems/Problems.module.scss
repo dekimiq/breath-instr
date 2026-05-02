@@ -1,5 +1,8 @@
 @use '@/styles/variables' as *;
 
+$arrows-color: #9fe2bf;
+$arrows-color-neon: #89cff0;
+
 .problems {
   position: relative;
   padding: 6rem 40px;
@@ -71,8 +74,8 @@
     transition: filter 0.3s ease;
 
     &:hover {
-      filter: drop-shadow(0 0 2px var(--arrowsColorNeon))
-        drop-shadow(0 0 10px var(--arrowsColorNeon));
+      filter: drop-shadow(0 0 2px $arrows-color-neon)
+        drop-shadow(0 0 10px $arrows-color-neon);
     }
   }
 
@@ -81,6 +84,13 @@
     line-height: 1.5;
     color: #333;
   }
+}
+
+.arrowLeft,
+.arrowRight,
+.arrowDown {
+  filter: brightness(0) saturate(100%) invert(88%) sepia(18%) saturate(684%)
+    hue-rotate(101deg) brightness(94%) contrast(88%);
 }
 
 .arrowLeft {

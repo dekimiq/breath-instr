@@ -1,5 +1,8 @@
+'use client'
+
 import React from 'react'
 
+import { motion } from 'framer-motion'
 import { Activity, Brain, Dna, Wind, Sparkles } from 'lucide-react'
 
 import GlassCard from '@/components/ui/GlassCard/GlassCard'
@@ -11,12 +14,33 @@ const Mechanisms: React.FC = () => {
   return (
     <section id="mechanisms" className={styles.mechanisms}>
       <div className="container">
-        <SectionHeader
-          subtitle="Механизмы работы"
-          title="На что у нас есть возможность повлиять через дыхание"
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8 }}
+        >
+          <SectionHeader
+            subtitle="Механизмы работы"
+            title="На что у нас есть возможность повлиять через дыхание"
+          />
+        </motion.div>
 
-        <div className={styles.cardsGrid}>
+        <motion.div
+          className={styles.cardsGrid}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-50px' }}
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.15,
+              },
+            },
+          }}
+        >
           <GlassCard
             title="Вегетативная нервная система"
             description="Напрямую переключать симпатический отдел (стресс, трата энергии) на парасимпатический (восстановление, накопление энергии) или обратно."
@@ -59,7 +83,7 @@ const Mechanisms: React.FC = () => {
             delay="800"
             glowColor="orange"
           />
-        </div>
+        </motion.div>
       </div>
     </section>
   )

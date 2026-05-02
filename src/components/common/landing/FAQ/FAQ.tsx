@@ -8,7 +8,10 @@ import styles from '@/components/common/landing/FAQ/FAQ.module.scss'
 import { FAQAccordion } from '@/components/common/landing/FAQ/FAQAccordion'
 import SectionHeader from '@/components/ui/SectionHeader/SectionHeader'
 
+import { useScrollTo } from '@/hooks/useScrollTo'
+
 export const FAQ: React.FC = () => {
+  const scrollTo = useScrollTo()
   useEffect(() => {
     const handleChatTrigger = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -37,9 +40,12 @@ export const FAQ: React.FC = () => {
           <p>
             Тут есть ответы на популярные вопросы, а если вашего вопроса нет -
             вы всегда можете задать его{' '}
-            <a href="#contacts" className={styles.link}>
+            <button
+              className={styles.link}
+              onClick={() => scrollTo('contacts')}
+            >
               инструктору
-            </a>{' '}
+            </button>{' '}
             или{' '}
             <button className={`${styles.link} chat-trigger`}>
               ассистенту

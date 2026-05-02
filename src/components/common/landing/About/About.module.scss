@@ -34,6 +34,21 @@
 }
 
 .textContent {
+  .inlineLink {
+    background: none;
+    border: none;
+    padding: 0;
+    color: $primary-color;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
   h3 {
     font-size: 2.5rem;
     line-height: 1.2;
