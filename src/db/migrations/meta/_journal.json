@@ -15,6 +15,13 @@
       "when": 1777927698314,
       "tag": "0001_bizarre_alice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777930232708,
+      "tag": "0002_brief_deathbird",
+      "breakpoints": true
     }
   ]
 }
