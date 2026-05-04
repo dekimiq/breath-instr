@@ -169,7 +169,7 @@ export async function POST(req: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       messages: messages as any,
       abortSignal: controller.signal,
-      onFinish: async ({ text }) => {
+      onFinish: async () => {
         // Optional: logging or processing
       },
     })

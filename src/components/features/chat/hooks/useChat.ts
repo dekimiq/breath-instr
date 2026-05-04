@@ -120,7 +120,7 @@ export const useChat = (_isOpen: boolean) => {
     } finally {
       setIsLoading(false)
     }
-  }, [inputValue, isLoading, isBlocked, serviceUnavailable])
+  }, [inputValue, isLoading, isBlocked, serviceUnavailable, messages])
 
   return {
     messages,

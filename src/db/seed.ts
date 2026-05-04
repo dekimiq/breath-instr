@@ -26,7 +26,7 @@ async function seed() {
     console.log(`   Login: ${login}`)
     console.log(`   Password: ${password}`)
     console.log('   -----------------------------------')
-  } catch (error) {
+  } catch {
     console.log('⚠️ Admin user might already exist, skipping...')
   }
 
@@ -34,7 +34,7 @@ async function seed() {
   try {
     const promptPath = path.join(process.cwd(), 'docs/bot_instruction.md')
     defaultPrompt = fs.readFileSync(promptPath, 'utf-8')
-  } catch (error) {
+  } catch {
     console.warn('⚠️ docs/bot_instruction.md not found, using empty prompt')
   }
 
