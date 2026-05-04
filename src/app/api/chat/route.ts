@@ -1,23 +1,15 @@
 export const dynamic = 'force-dynamic'
 
 import { db } from '@/db'
-import { aiUsage } from '@/db/schema'
+import { aiUsage, settings } from '@/db/schema'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { streamText } from 'ai'
 import { eq, sql } from 'drizzle-orm'
-import * as fs from 'fs'
 import { headers } from 'next/headers'
-import * as path from 'path'
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY || '',
-})
-
-const MODEL_NAME = process.env.AI_MODEL_NAME || 'openai/gpt-3.5-turbo'
-const MAX_CHARS = Number(process.env.MAX_CHAT_CHARS) || 128
-const AI_IP_LIMIT = Number(process.env.AI_IP_LIMIT) || 3
-const RESET_DAYS = Number(process.env.AI_USAGE_RESET_DAYS) || 1
-const REQUEST_TIMEOUT = 10000
+const REQUEST_TIMEOUT = 15000
+const MAX_CHARS_USER = 128
+const MAX_CHARS_AI_CONTEXT = MAX_CHARS_USER * 2
 
 interface ChatHistoryMessage {
   role: 'user' | 'assistant'
@@ -47,60 +39,85 @@ const MEDICAL_KEYWORDS = [
 const MEDICAL_DISCLAIMER =
   '\n\n*Не является медицинской консультацией или рекомендацией. Обязательно обратитесь к специалисту.*'
 
+interface AISettings {
+  baseUrl: string
+  apiKey: string
+  ipLimit: number
+  resetDays: number
+  systemPrompt: string
+  modelName: string
+}
+
+async function getAISettings(): Promise<Partial<AISettings>> {
+  const allSettings = await db.select().from(settings)
+  const config: Partial<AISettings> = {}
+
+  allSettings.forEach((s) => {
+    const val = s.value as Record<string, unknown>
+    if (s.key === 'AI_BASE_URL') config.baseUrl = val?.url as string
+    else if (s.key === 'OPENROUTER_API_KEY') config.apiKey = val?.key as string
+    else if (s.key === 'AI_IP_LIMIT') config.ipLimit = Number(val?.limit)
+    else if (s.key === 'AI_USAGE_RESET_DAYS')
+      config.resetDays = Number(val?.days)
+    else if (s.key === 'AI_PROMPT') config.systemPrompt = val?.content as string
+    else if (s.key === 'AI_MODEL_NAME') config.modelName = val?.value as string
+  })
+
+  return config
+}
+
 export async function POST(req: Request) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
 
   try {
+    const config = await getAISettings()
+
+    if (
+      !config.apiKey ||
+      !config.modelName ||
+      !config.systemPrompt ||
+      !config.baseUrl ||
+      config.ipLimit === undefined ||
+      config.resetDays === undefined
+    ) {
+      console.error('[AI API] Missing critical configuration in DB:', config)
+      return new Response(
+        JSON.stringify({ error: 'Сервис временно недоступен .' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const safeConfig = config as AISettings
     const body = await req.json()
     const message = body.message as string
     const history = body.history as ChatHistoryMessage[]
 
-    if (!message || message.length > MAX_CHARS) {
+    if (!message || message.length > MAX_CHARS_USER) {
       return new Response(
         JSON.stringify({
-          error: `Сообщение слишком длинное (макс. ${MAX_CHARS} символов)`,
+          error: `Сообщение слишком длинное (макс. ${MAX_CHARS_USER} символов)`,
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
-    const validatedHistory = Array.isArray(history) ? history.slice(-4) : []
-    for (const msg of validatedHistory) {
-      const isAssistant = msg.role === 'assistant'
-      const limit = isAssistant ? MAX_CHARS * 2 : MAX_CHARS
-      if (typeof msg.content !== 'string' || msg.content.length > limit) {
-        msg.content = msg.content.substring(0, limit)
-      }
-    }
+    const openrouter = createOpenRouter({
+      apiKey: safeConfig.apiKey,
+      baseURL: safeConfig.baseUrl,
+    })
 
-    const personaPath = path.join(process.cwd(), 'docs', 'bot_instruction.md')
-    let systemPromptContent =
-      'You are a helpful and empathetic breathwork instructor AI.'
-    if (fs.existsSync(personaPath)) {
-      systemPromptContent = fs.readFileSync(personaPath, 'utf8')
-    }
+    const validatedHistory = Array.isArray(history) ? history.slice(-4) : []
 
     const headersList = await headers()
     const forwardedFor = headersList.get('x-forwarded-for')
     const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1'
-    // For dev
-    // const isLocalhost = false
-    const isLocalhost =
-      ip === '127.0.0.1' ||
-      ip === '::1' ||
-      ip === 'localhost' ||
-      ip.endsWith('127.0.0.1')
 
-    if (isLocalhost) {
-      console.warn(
-        `[AI API] Request from localhost (${ip}): Rate limit bypassed.`
-      )
-    }
+    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
 
     const now = new Date()
     const resetThreshold = new Date(
-      now.getTime() - RESET_DAYS * 24 * 60 * 60 * 1000
+      now.getTime() - safeConfig.resetDays * 24 * 60 * 60 * 1000
     )
     const todayDateStr = now.toISOString().split('T')[0]
 
@@ -120,10 +137,10 @@ export async function POST(req: Request) {
       if (existingUsage.length > 0) {
         const usage = existingUsage[0]
         currentUsageCount = usage.requestCount
-        if (currentUsageCount >= AI_IP_LIMIT) {
+        if (currentUsageCount >= safeConfig.ipLimit) {
           return new Response(
             JSON.stringify({
-              error: `Лимит запросов (${AI_IP_LIMIT}) исчерпан. Попробуйте позже.`,
+              error: `Лимит запросов (${safeConfig.ipLimit}) исчерпан. Попробуйте позже.`,
               code: 'SESSION_LIMIT_REACHED',
             }),
             { status: 429, headers: { 'Content-Type': 'application/json' } }
@@ -148,30 +165,23 @@ export async function POST(req: Request) {
       }
     }
 
-    if (Math.random() < 0.01) {
-      await db.execute(
-        sql`DELETE FROM ${aiUsage} WHERE ${aiUsage.date} < NOW() - INTERVAL '3 months'`
-      )
-    }
-
     const messages = [
-      { role: 'system' as const, content: systemPromptContent },
+      { role: 'system' as const, content: safeConfig.systemPrompt },
       ...validatedHistory.map((msg) => ({
         role:
           msg.role === 'assistant' ? ('assistant' as const) : ('user' as const),
-        content: msg.content,
+        content: msg.content.slice(0, MAX_CHARS_AI_CONTEXT),
       })),
       { role: 'user' as const, content: message },
     ]
 
     const result = streamText({
-      model: openrouter.chat(MODEL_NAME),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      messages: messages as any,
+      model: openrouter.chat(safeConfig.modelName),
+      messages: messages as {
+        role: 'system' | 'user' | 'assistant'
+        content: string
+      }[],
       abortSignal: controller.signal,
-      onFinish: async () => {
-        // Optional: logging or processing
-      },
     })
 
     const containsMedical = messages.some((m) => {
@@ -180,10 +190,17 @@ export async function POST(req: Request) {
       return MEDICAL_KEYWORDS.some((keyword) => content.includes(keyword))
     })
 
+    const responseHeaders = {
+      'x-ai-max-chars': MAX_CHARS_USER.toString(),
+      'x-ai-limit-total': safeConfig.ipLimit.toString(),
+      'x-ai-limit-remaining': isLocalhost
+        ? safeConfig.ipLimit.toString()
+        : Math.max(0, safeConfig.ipLimit - currentUsageCount).toString(),
+    }
+
     if (containsMedical) {
       const textStream = result.textStream
       const encoder = new TextEncoder()
-
       const transformStream = new TransformStream({
         async transform(chunk, controller) {
           controller.enqueue(chunk)
@@ -205,40 +222,27 @@ export async function POST(req: Request) {
 
       return new Response(responseStream, {
         headers: {
+          ...responseHeaders,
           'Content-Type': 'text/plain; charset=utf-8',
-          'x-ai-max-chars': MAX_CHARS.toString(),
-          'x-ai-limit-total': AI_IP_LIMIT.toString(),
-          'x-ai-limit-remaining': isLocalhost
-            ? AI_IP_LIMIT.toString()
-            : Math.max(0, AI_IP_LIMIT - currentUsageCount).toString(),
         },
       })
     }
 
-    return result.toTextStreamResponse({
-      headers: {
-        'x-ai-max-chars': MAX_CHARS.toString(),
-        'x-ai-limit-total': AI_IP_LIMIT.toString(),
-        'x-ai-limit-remaining': isLocalhost
-          ? AI_IP_LIMIT.toString()
-          : Math.max(0, AI_IP_LIMIT - currentUsageCount).toString(),
-      },
-    })
+    return result.toTextStreamResponse({ headers: responseHeaders })
   } catch (err: unknown) {
     clearTimeout(timeoutId)
     console.error('AI Proxy Error:', err)
-
     const error = err as Error
     const isTimeout = error.name === 'AbortError'
-    const status = isTimeout ? 504 : 500
-    const message = isTimeout
-      ? 'Превышено время ожидания ответа.'
-      : 'Ошибка сервера при обработке запроса.'
-
-    return new Response(JSON.stringify({ error: message }), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({
+        error: isTimeout ? 'Превышено время ожидания.' : 'Ошибка сервера.',
+      }),
+      {
+        status: isTimeout ? 504 : 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
   } finally {
     clearTimeout(timeoutId)
   }
