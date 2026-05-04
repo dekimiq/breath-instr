@@ -15,7 +15,7 @@ const openrouter = createOpenRouter({
 
 const MODEL_NAME = process.env.AI_MODEL_NAME || 'openai/gpt-3.5-turbo'
 const MAX_CHARS = Number(process.env.MAX_CHAT_CHARS) || 128
-const DAILY_LIMIT = Number(process.env.DAILY_IP_LIMIT) || 3
+const AI_IP_LIMIT = Number(process.env.AI_IP_LIMIT) || 3
 const RESET_DAYS = Number(process.env.AI_USAGE_RESET_DAYS) || 1
 const REQUEST_TIMEOUT = 10000
 
@@ -84,6 +84,7 @@ export async function POST(req: Request) {
     const headersList = await headers()
     const forwardedFor = headersList.get('x-forwarded-for')
     const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1'
+    // For dev
     // const isLocalhost = false
     const isLocalhost =
       ip === '127.0.0.1' ||
@@ -114,13 +115,15 @@ export async function POST(req: Request) {
           .orderBy(sql`${aiUsage.date} DESC`)
           .limit(1)
 
+    let currentUsageCount = 0
     if (!isLocalhost) {
       if (existingUsage.length > 0) {
         const usage = existingUsage[0]
-        if (usage.requestCount >= DAILY_LIMIT) {
+        currentUsageCount = usage.requestCount
+        if (currentUsageCount >= AI_IP_LIMIT) {
           return new Response(
             JSON.stringify({
-              error: `Лимит запросов (${DAILY_LIMIT}) исчерпан. Попробуйте позже.`,
+              error: `Лимит запросов (${AI_IP_LIMIT}) исчерпан. Попробуйте позже.`,
               code: 'SESSION_LIMIT_REACHED',
             }),
             { status: 429, headers: { 'Content-Type': 'application/json' } }
@@ -130,16 +133,18 @@ export async function POST(req: Request) {
         await db
           .update(aiUsage)
           .set({
-            requestCount: usage.requestCount + 1,
+            requestCount: currentUsageCount + 1,
             updatedAt: new Date(),
           })
           .where(eq(aiUsage.id, usage.id))
+        currentUsageCount++
       } else {
         await db.insert(aiUsage).values({
           ip,
           date: todayDateStr,
           requestCount: 1,
         })
+        currentUsageCount = 1
       }
     }
 
@@ -199,11 +204,26 @@ export async function POST(req: Request) {
         .pipeThrough(transformStream)
 
       return new Response(responseStream, {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'x-ai-max-chars': MAX_CHARS.toString(),
+          'x-ai-limit-total': AI_IP_LIMIT.toString(),
+          'x-ai-limit-remaining': isLocalhost
+            ? AI_IP_LIMIT.toString()
+            : Math.max(0, AI_IP_LIMIT - currentUsageCount).toString(),
+        },
       })
     }
 
-    return result.toTextStreamResponse()
+    return result.toTextStreamResponse({
+      headers: {
+        'x-ai-max-chars': MAX_CHARS.toString(),
+        'x-ai-limit-total': AI_IP_LIMIT.toString(),
+        'x-ai-limit-remaining': isLocalhost
+          ? AI_IP_LIMIT.toString()
+          : Math.max(0, AI_IP_LIMIT - currentUsageCount).toString(),
+      },
+    })
   } catch (err: unknown) {
     clearTimeout(timeoutId)
     console.error('AI Proxy Error:', err)
