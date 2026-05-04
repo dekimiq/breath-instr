@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 
 import { Message, Limits } from '../types'
 
-const MAX_CHARS = 128
-const DAILY_LIMIT = 3
 const STORAGE_KEY = 'chat_history'
 
 export const useChat = (_isOpen: boolean) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [maxChars, setMaxChars] = useState(128)
   const [limits, setLimits] = useState<Limits | null>(null)
   const [isBlocked, setIsBlocked] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -78,6 +77,17 @@ export const useChat = (_isOpen: boolean) => {
         )
         return
       }
+      const headerMaxChars = response.headers.get('x-ai-max-chars')
+      const headerLimitTotal = response.headers.get('x-ai-limit-total')
+      const headerLimitRemaining = response.headers.get('x-ai-limit-remaining')
+
+      if (headerMaxChars) setMaxChars(Number(headerMaxChars))
+      if (headerLimitTotal && headerLimitRemaining) {
+        setLimits({
+          remaining: Number(headerLimitRemaining),
+          total: Number(headerLimitTotal),
+        })
+      }
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
@@ -98,14 +108,6 @@ export const useChat = (_isOpen: boolean) => {
           })
         }
       }
-
-      setLimits((prev) => {
-        const currentRemaining = prev ? prev.remaining : DAILY_LIMIT
-        return {
-          remaining: Math.max(0, currentRemaining - 1),
-          total: DAILY_LIMIT,
-        }
-      })
     } catch (error: unknown) {
       if (!isBlocked && !serviceUnavailable) {
         setServiceUnavailable(true)
@@ -131,6 +133,6 @@ export const useChat = (_isOpen: boolean) => {
     blockReason,
     serviceUnavailable,
     sendMessage,
-    MAX_CHARS,
+    MAX_CHARS: maxChars,
   }
 }
