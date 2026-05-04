@@ -8,13 +8,12 @@ export default defineConfig({
   out: './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url:
-      process.env.DATABASE_URL?.replace(
-        '${POSTGRES_USER}',
-        process.env.POSTGRES_USER || ''
-      )
-        .replace('${POSTGRES_PASSWORD}', process.env.POSTGRES_PASSWORD || '')
-        .replace('${POSTGRES_DB}', process.env.POSTGRES_DB || '') || '',
+    host: 'localhost',
+    port: 5435,
+    user: process.env.POSTGRES_USER || 'admin',
+    password: process.env.POSTGRES_PASSWORD || 'postgres_password_123',
+    database: process.env.POSTGRES_DB || 'breath_instr',
+    ssl: false,
   },
   verbose: true,
   strict: true,
