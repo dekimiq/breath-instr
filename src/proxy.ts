@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { decrypt } from '@/services/auth'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const session = request.cookies.get('session')?.value
 
   // Приватные /api/admin
