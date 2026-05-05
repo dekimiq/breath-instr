@@ -1,0 +1,112 @@
+@use '@/styles/variables' as vars;
+
+.selectWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  position: relative;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selectContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: vars.$primary-color;
+  }
+
+  &.isOpen {
+    border-color: vars.$primary-color;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(vars.$primary-color, 0.1);
+
+    .arrow {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.currentValue {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  color: vars.$primary-color;
+}
+
+.text {
+  font-size: 0.9375rem;
+  color: vars.$text-color-primary;
+  font-weight: 500;
+}
+
+.placeholder {
+  font-size: 0.9375rem;
+  color: #94a3b8;
+}
+
+.arrow {
+  color: #64748b;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.option {
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: vars.$text-color-secondary;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    color: vars.$primary-color;
+  }
+
+  &.isSelected {
+    background: rgba(vars.$primary-color, 0.08);
+    color: vars.$primary-color;
+    font-weight: 600;
+  }
+}
