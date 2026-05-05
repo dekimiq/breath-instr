@@ -24,6 +24,22 @@ export async function PATCH(request: Request) {
       | { key: string; value: unknown }[]
 
     if (Array.isArray(body)) {
+      for (const item of body) {
+        if (item.key === 'AI_IP_LIMIT' || item.key === 'AI_USAGE_RESET_DAYS') {
+          let val: unknown = item.value
+          if (typeof item.value === 'object' && item.value !== null) {
+            const record = item.value as Record<string, unknown>
+            val = record.limit ?? record.days
+          }
+          if (Number(val) < 3) {
+            return NextResponse.json(
+              { error: `Лимит для ${item.key} должен быть не менее 3` },
+              { status: 400 }
+            )
+          }
+        }
+      }
+
       const baseUrlSetting = body.find((s) => s.key === 'AI_BASE_URL')
       if (baseUrlSetting && typeof baseUrlSetting.value === 'string') {
         try {
@@ -52,6 +68,20 @@ export async function PATCH(request: Request) {
     const { key, value } = body
     if (!key) {
       return NextResponse.json({ error: 'Ключ обязателен' }, { status: 400 })
+    }
+
+    if (key === 'AI_IP_LIMIT' || key === 'AI_USAGE_RESET_DAYS') {
+      let val: unknown = value
+      if (typeof value === 'object' && value !== null) {
+        const record = value as Record<string, unknown>
+        val = record.limit ?? record.days
+      }
+      if (Number(val) < 3) {
+        return NextResponse.json(
+          { error: `Лимит для ${key} должен быть не менее 3` },
+          { status: 400 }
+        )
+      }
     }
 
     if (key === 'AI_BASE_URL' && typeof value === 'string') {
