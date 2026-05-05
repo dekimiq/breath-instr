@@ -10,7 +10,6 @@ import remarkGfm from 'remark-gfm'
 import { Input } from '@/components/ui/Input/Input'
 import { Select } from '@/components/ui/Select/Select'
 
-
 interface Setting {
   key: string
   value: unknown
@@ -40,7 +39,7 @@ export default function ManagementPortal() {
 
   useEffect(() => {
     fetchSettings()
-  }, [])
+  })
 
   const fetchSettings = async () => {
     try {
@@ -135,7 +134,7 @@ export default function ManagementPortal() {
         const data = await res.json()
         alert(data.error || 'Не удалось сохранить настройки')
       }
-    } catch (err) {
+    } catch {
       alert('Ошибка при сохранении настроек')
     } finally {
       setSaving(false)
