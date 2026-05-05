@@ -1,0 +1,78 @@
+@use '@/styles/variables' as *;
+
+// $color-rgb: #aaaaaa;
+$color-rgb: #ffffff;
+$color-rgb2: #f8fafc;
+$color-border: #e2e8f0;
+
+.loginContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.loginForm {
+  background: $color-rgb;
+  padding: 2.5rem;
+  border-radius: $global-border-radius;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $primary-color;
+  }
+
+  input {
+    padding: 0.875rem;
+    border-radius: 8px;
+    border: 1px solid $color-border;
+    outline: none;
+    transition: border-color 0.2s;
+    background-color: $color-rgb2;
+
+    &:focus {
+      border-color: $primary-color;
+    }
+  }
+
+  button {
+    padding: 0.875rem;
+    border-radius: 8px;
+    background: $primary-color;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+
+    &:hover {
+      background: darken($primary-color, 10%);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  text-align: center;
+}
