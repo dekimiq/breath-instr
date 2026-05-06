@@ -29,3 +29,12 @@ lint-fix:
 db-setup:
 	npx drizzle-kit generate
 	npx drizzle-kit push
+
+seed:
+	npx tsx src/db/seed.ts
+
+setup:
+	docker compose up -d
+	npm install
+	npx drizzle-kit push
+	npx tsx src/db/seed.ts
