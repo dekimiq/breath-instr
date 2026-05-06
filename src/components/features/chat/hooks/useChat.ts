@@ -5,7 +5,19 @@ import { Message, Limits } from '../types'
 const STORAGE_KEY = 'chat_history'
 
 export const useChat = (_isOpen: boolean) => {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedHistory = localStorage.getItem(STORAGE_KEY)
+      if (savedHistory) {
+        try {
+          return JSON.parse(savedHistory)
+        } catch (e) {
+          console.error('Failed to parse chat history', e)
+        }
+      }
+    }
+    return []
+  })
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [maxChars, setMaxChars] = useState(128)
@@ -14,17 +26,6 @@ export const useChat = (_isOpen: boolean) => {
   const [validationError, setValidationError] = useState<string | null>(null)
   const [blockReason, setBlockReason] = useState<string | null>(null)
   const [serviceUnavailable, setServiceUnavailable] = useState(false)
-
-  useEffect(() => {
-    const savedHistory = localStorage.getItem(STORAGE_KEY)
-    if (savedHistory) {
-      try {
-        setMessages(JSON.parse(savedHistory))
-      } catch (e) {
-        console.error('Failed to parse chat history', e)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -96,16 +97,38 @@ export const useChat = (_isOpen: boolean) => {
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
       if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          const chunk = decoder.decode(value, { stream: true })
-          assistantMessage += chunk
-          setMessages((prev) => {
-            const newMessages = [...prev]
-            newMessages[newMessages.length - 1].content = assistantMessage
-            return newMessages
-          })
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            const chunk = decoder.decode(value, { stream: true })
+            assistantMessage += chunk
+            setMessages((prev) => {
+              const newMessages = [...prev]
+              newMessages[newMessages.length - 1].content = assistantMessage
+              return newMessages
+            })
+          }
+
+          if (!assistantMessage.trim()) {
+            throw new Error('Получен пустой ответ от ассистента.')
+          }
+        } catch (streamError: unknown) {
+          console.error('Stream reading error:', streamError)
+          setServiceUnavailable(true)
+          setBlockReason(
+            'В данный момент ассистент недоступен. Попробуйте позже или свяжитесь со мной напрямую.'
+          )
+          setMessages((prev) =>
+            prev.filter(
+              (msg, idx) =>
+                idx !== prev.length - 1 ||
+                msg.content !== '' ||
+                msg.role !== 'assistant'
+            )
+          )
+        } finally {
+          reader.releaseLock()
         }
       }
     } catch (error: unknown) {
