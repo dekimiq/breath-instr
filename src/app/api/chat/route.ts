@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { aiUsage, settings } from '@/db/schema'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { streamText } from 'ai'
+import axios from 'axios'
 import { eq, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
@@ -34,6 +35,7 @@ const MEDICAL_KEYWORDS = [
   'клиник',
   'медицин',
   'здоров',
+  'самочувс',
 ]
 
 const MEDICAL_DISCLAIMER =
@@ -53,14 +55,13 @@ async function getAISettings(): Promise<Partial<AISettings>> {
   const config: Partial<AISettings> = {}
 
   allSettings.forEach((s) => {
-    const val = s.value as Record<string, unknown>
-    if (s.key === 'AI_BASE_URL') config.baseUrl = val?.url as string
-    else if (s.key === 'OPENROUTER_API_KEY') config.apiKey = val?.key as string
-    else if (s.key === 'AI_IP_LIMIT') config.ipLimit = Number(val?.limit)
-    else if (s.key === 'AI_USAGE_RESET_DAYS')
-      config.resetDays = Number(val?.days)
-    else if (s.key === 'AI_PROMPT') config.systemPrompt = val?.content as string
-    else if (s.key === 'AI_MODEL_NAME') config.modelName = val?.value as string
+    const val = s.value as string
+    if (s.key === 'AI_BASE_URL') config.baseUrl = val as string
+    else if (s.key === 'AI_API_KEY') config.apiKey = val as string
+    else if (s.key === 'AI_IP_LIMIT') config.ipLimit = Number(val)
+    else if (s.key === 'AI_USAGE_RESET_DAYS') config.resetDays = Number(val)
+    else if (s.key === 'AI_PROMPT') config.systemPrompt = val as string
+    else if (s.key === 'AI_MODEL_NAME') config.modelName = val as string
   })
 
   return config
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
     ) {
       console.error('[AI API] Missing critical configuration in DB:', config)
       return new Response(
-        JSON.stringify({ error: 'Сервис временно недоступен .' }),
+        JSON.stringify({ error: 'Сервис временно недоступен.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -105,6 +106,42 @@ export async function POST(req: Request) {
     const openrouter = createOpenRouter({
       apiKey: safeConfig.apiKey,
       baseURL: safeConfig.baseUrl,
+      fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = input.toString()
+        const method = init?.method || 'GET'
+
+        try {
+          const axiosResponse = await axios({
+            url,
+            method,
+            headers: init?.headers as Record<string, string>,
+            data: init?.body,
+            responseType: 'arraybuffer',
+            validateStatus: () => true,
+          })
+
+          const response = new Response(axiosResponse.data, {
+            status: axiosResponse.status,
+            statusText: axiosResponse.statusText,
+            headers: axiosResponse.headers as Record<string, string>,
+          })
+
+          if (!response.ok) {
+            const errorBody = new TextDecoder().decode(axiosResponse.data)
+            console.error(`[AI API] Request Failed:`, {
+              status: response.status,
+              statusText: response.statusText,
+              url,
+              body: errorBody.slice(0, 500),
+            })
+          }
+
+          return response
+        } catch (axiosError) {
+          console.error(`[AI API] Axios Exception for ${url}:`, axiosError)
+          throw axiosError
+        }
+      },
     })
 
     const validatedHistory = Array.isArray(history) ? history.slice(-4) : []
@@ -113,7 +150,8 @@ export async function POST(req: Request) {
     const forwardedFor = headersList.get('x-forwarded-for')
     const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1'
 
-    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
+    const isLocalhost = true
+    // const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
 
     const now = new Date()
     const resetThreshold = new Date(
@@ -146,49 +184,8 @@ export async function POST(req: Request) {
             { status: 429, headers: { 'Content-Type': 'application/json' } }
           )
         }
-
-        await db
-          .update(aiUsage)
-          .set({
-            requestCount: currentUsageCount + 1,
-            updatedAt: new Date(),
-          })
-          .where(eq(aiUsage.id, usage.id))
-        currentUsageCount++
-      } else {
-        await db.insert(aiUsage).values({
-          ip,
-          date: todayDateStr,
-          requestCount: 1,
-        })
-        currentUsageCount = 1
       }
     }
-
-    const messages = [
-      { role: 'system' as const, content: safeConfig.systemPrompt },
-      ...validatedHistory.map((msg) => ({
-        role:
-          msg.role === 'assistant' ? ('assistant' as const) : ('user' as const),
-        content: msg.content.slice(0, MAX_CHARS_AI_CONTEXT),
-      })),
-      { role: 'user' as const, content: message },
-    ]
-
-    const result = streamText({
-      model: openrouter.chat(safeConfig.modelName),
-      messages: messages as {
-        role: 'system' | 'user' | 'assistant'
-        content: string
-      }[],
-      abortSignal: controller.signal,
-    })
-
-    const containsMedical = messages.some((m) => {
-      if (typeof m.content !== 'string') return false
-      const content = m.content.toLowerCase()
-      return MEDICAL_KEYWORDS.some((keyword) => content.includes(keyword))
-    })
 
     const responseHeaders = {
       'x-ai-max-chars': MAX_CHARS_USER.toString(),
@@ -198,40 +195,96 @@ export async function POST(req: Request) {
         : Math.max(0, safeConfig.ipLimit - currentUsageCount).toString(),
     }
 
-    if (containsMedical) {
-      const textStream = result.textStream
-      const encoder = new TextEncoder()
-      const transformStream = new TransformStream({
-        async transform(chunk, controller) {
-          controller.enqueue(chunk)
-        },
-        flush(controller) {
-          controller.enqueue(encoder.encode(MEDICAL_DISCLAIMER))
-        },
-      })
+    const result = streamText({
+      model: openrouter.chat(safeConfig.modelName),
+      system: safeConfig.systemPrompt,
+      messages: validatedHistory
+        .map((msg) => ({
+          role:
+            msg.role === 'assistant'
+              ? ('assistant' as const)
+              : ('user' as const),
+          content: msg.content.slice(0, MAX_CHARS_AI_CONTEXT),
+        }))
+        .concat([{ role: 'user' as const, content: message }]),
+      abortSignal: controller.signal,
+      onFinish: async ({ text }) => {
+        if (!isLocalhost && text && text.trim().length > 0) {
+          try {
+            if (existingUsage.length > 0) {
+              const usage = existingUsage[0]
+              await db
+                .update(aiUsage)
+                .set({
+                  requestCount: usage.requestCount + 1,
+                  updatedAt: new Date(),
+                })
+                .where(eq(aiUsage.id, usage.id))
+            } else {
+              await db.insert(aiUsage).values({
+                ip,
+                date: todayDateStr,
+                requestCount: 1,
+              })
+            }
+            console.log(`[AI API] Usage recorded for IP: ${ip}`)
+          } catch (dbError) {
+            console.error(
+              '[AI API] Failed to record usage in onFinish:',
+              dbError
+            )
+          }
+        }
+      },
+    })
 
-      const responseStream = textStream
-        .pipeThrough(
-          new TransformStream({
-            transform(chunk, controller) {
-              controller.enqueue(encoder.encode(chunk))
-            },
-          })
-        )
-        .pipeThrough(transformStream)
+    const encoder = new TextEncoder()
+    const reader = result.textStream.getReader()
+    let fullText = ''
 
-      return new Response(responseStream, {
-        headers: {
-          ...responseHeaders,
-          'Content-Type': 'text/plain; charset=utf-8',
-        },
-      })
-    }
+    const responseStream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            fullText += value
+            controller.enqueue(encoder.encode(value))
+          }
 
-    return result.toTextStreamResponse({ headers: responseHeaders })
+          const containsMedical = MEDICAL_KEYWORDS.some((keyword) =>
+            fullText.toLowerCase().includes(keyword)
+          )
+          const alreadyHasDisclaimer = fullText.includes(
+            MEDICAL_DISCLAIMER.trim()
+          )
+
+          if (
+            containsMedical &&
+            !alreadyHasDisclaimer &&
+            fullText.trim().length > 0
+          ) {
+            controller.enqueue(encoder.encode(MEDICAL_DISCLAIMER))
+          }
+          controller.close()
+        } catch (err) {
+          console.error('[Stream Error]:', err)
+          controller.error(err)
+        } finally {
+          reader.releaseLock()
+        }
+      },
+    })
+
+    return new Response(responseStream, {
+      headers: {
+        ...responseHeaders,
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    })
   } catch (err: unknown) {
     clearTimeout(timeoutId)
-    console.error('AI Proxy Error:', err)
+    console.error('[AI API] CRITICAL ERROR:', err)
     const error = err as Error
     const isTimeout = error.name === 'AbortError'
     return new Response(
