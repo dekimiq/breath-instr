@@ -6,7 +6,6 @@ import {
   uuid,
   timestamp,
   varchar,
-  jsonb,
 } from 'drizzle-orm/pg-core'
 
 // Таблица пользователей для админки
@@ -22,7 +21,7 @@ export const users = pgTable('users', {
 export const settings = pgTable('settings', {
   id: uuid('id').defaultRandom().primaryKey(),
   key: varchar('key', { length: 100 }).notNull().unique(),
-  value: jsonb('value').notNull(),
+  value: text('value').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

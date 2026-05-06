@@ -41,32 +41,32 @@ async function seed() {
   const defaultSettings = [
     {
       key: 'AI_PROMPT',
-      value: { content: defaultPrompt },
+      value: defaultPrompt,
       description: 'Системный промпт для ИИ',
     },
     {
       key: 'AI_BASE_URL',
-      value: { url: 'https://openrouter.ai/api/v1' },
+      value: 'https://openrouter.ai/api/v1',
       description: 'Base URL для API запросов (OpenRouter или прокси)',
     },
     {
       key: 'AI_API_KEY',
-      value: { key: '' },
+      value: '',
       description: 'API ключ для доступа к моделям',
     },
     {
       key: 'AI_MODEL_NAME',
-      value: { model: 'openai/gpt-3.5-turbo' },
+      value: 'openai/gpt-3.5-turbo',
       description: 'Название используемой модели',
     },
     {
       key: 'AI_IP_LIMIT',
-      value: { limit: parseInt(process.env.AI_IP_LIMIT || '3') },
+      value: String(process.env.AI_IP_LIMIT || '3'),
       description: 'Лимит запросов на один IP',
     },
     {
       key: 'AI_USAGE_RESET_DAYS',
-      value: { days: parseInt(process.env.AI_USAGE_RESET_DAYS || '7') },
+      value: String(process.env.AI_USAGE_RESET_DAYS || '7'),
       description: 'Период сброса лимитов (в днях)',
     },
   ]
@@ -78,7 +78,10 @@ async function seed() {
         .values(setting)
         .onConflictDoUpdate({
           target: settings.key,
-          set: { updatedAt: new Date() },
+          set: {
+            value: setting.value,
+            updatedAt: new Date(),
+          },
         })
       console.log(`✅ Setting ${setting.key} initialized`)
     } catch (error) {
