@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 import styles from '@/app/(admin)/management-portal/ManagementPortal.module.scss'
@@ -23,7 +23,7 @@ interface Model {
 
 interface ApiSetting {
   key: string
-  value: Record<string, unknown>
+  value: unknown
   description: string | null
 }
 
@@ -37,38 +37,24 @@ export default function ManagementPortal() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchSettings()
-  })
+  const fetchModels = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/models')
+      if (res.ok) {
+        const data = await res.json()
+        setModels(data)
+      }
+    } catch (err) {
+      console.error('Ошибка получения моделей', err)
+    }
+  }, [])
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings')
       if (res.ok) {
         const data: ApiSetting[] = await res.json()
-        const flattened = data.map((s) => {
-          const val = s.value
-          let extractedValue: unknown = val
-          if (typeof val === 'object' && val !== null) {
-            const record = val as Record<string, unknown>
-            if (s.key === 'AI_BASE_URL' && 'url' in record)
-              extractedValue = record.url
-            else if (s.key === 'OPENROUTER_API_KEY' && 'key' in record)
-              extractedValue = record.key
-            else if (s.key === 'AI_IP_LIMIT' && 'limit' in record)
-              extractedValue = record.limit
-            else if (s.key === 'AI_USAGE_RESET_DAYS' && 'days' in record)
-              extractedValue = record.days
-            else if (s.key === 'AI_PROMPT' && 'content' in record)
-              extractedValue = record.content
-            else if (s.key === 'AI_MODEL_NAME' && 'value' in record)
-              extractedValue = record.value
-            else if ('key' in record) extractedValue = record.key
-            else if ('value' in record) extractedValue = record.value
-          }
-          return { ...s, value: extractedValue }
-        })
-        setSettings(flattened)
+        setSettings(data)
         setIsLoggedIn(true)
         fetchModels()
       } else if (res.status === 401) {
@@ -80,19 +66,13 @@ export default function ManagementPortal() {
       setIsLoggedIn(false)
       router.push('/login')
     }
-  }
+  }, [fetchModels, router])
 
-  const fetchModels = async () => {
-    try {
-      const res = await fetch('/api/admin/models')
-      if (res.ok) {
-        const data = await res.json()
-        setModels(data)
-      }
-    } catch (err) {
-      console.error('Ошибка получения моделей', err)
-    }
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -108,17 +88,11 @@ export default function ManagementPortal() {
     setSaving(true)
     try {
       const wrappedSettings = settings.map((s) => {
-        let wrappedValue: unknown = s.value
-        if (s.key === 'AI_BASE_URL') wrappedValue = { url: s.value }
-        else if (s.key === 'OPENROUTER_API_KEY') wrappedValue = { key: s.value }
-        else if (s.key === 'AI_IP_LIMIT')
-          wrappedValue = { limit: Number(s.value) }
-        else if (s.key === 'AI_USAGE_RESET_DAYS')
-          wrappedValue = { days: Number(s.value) }
-        else if (s.key === 'AI_PROMPT') wrappedValue = { content: s.value }
-        else if (s.key === 'AI_MODEL_NAME') wrappedValue = { value: s.value }
-
-        return { ...s, value: wrappedValue }
+        let value: unknown = s.value
+        if (s.key === 'AI_IP_LIMIT' || s.key === 'AI_USAGE_RESET_DAYS') {
+          value = Number(s.value)
+        }
+        return { ...s, value }
       })
 
       const res = await fetch('/api/admin/settings', {
