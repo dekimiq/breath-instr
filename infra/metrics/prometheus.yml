@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    metrics_path: '/stub_status'
+
+  - job_name: 'apache'
+    static_configs:
+      - targets: ['apache:8080']
+    metrics_path: '/server-status'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'app'
+    static_configs:
+      - targets: ['app:3000']
+    metrics_path: '/api/metrics'
