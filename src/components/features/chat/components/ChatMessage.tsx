@@ -11,10 +11,22 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const isTyping = message.role === 'assistant' && !message.content
+
   return (
-    <div className={`${styles.message} ${styles[message.role]}`}>
+    <div
+      className={`${styles.message} ${styles[message.role]}`}
+      aria-live={isTyping ? 'polite' : 'off'}
+      aria-label={isTyping ? 'Думаю' : undefined}
+    >
       <div className={styles.messageContent}>
-        {message.role === 'assistant' ? (
+        {isTyping ? (
+          <div className={styles.typing}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        ) : message.role === 'assistant' ? (
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {message.content}
           </ReactMarkdown>

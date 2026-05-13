@@ -39,7 +39,11 @@ export const useChat = (_isOpen: boolean) => {
 
     setValidationError(null)
     const userMessage: Message = { role: 'user', content: trimmedValue }
-    setMessages((prev) => [...prev, userMessage])
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      { role: 'assistant', content: '' },
+    ])
     setInputValue('')
     setIsLoading(true)
     setServiceUnavailable(false)
@@ -54,6 +58,18 @@ export const useChat = (_isOpen: boolean) => {
         }),
       })
 
+      const removePlaceholder = () =>
+        setMessages((prev) =>
+          prev.filter(
+            (msg, idx) =>
+              !(
+                idx === prev.length - 1 &&
+                msg.role === 'assistant' &&
+                msg.content === ''
+              )
+          )
+        )
+
       if (!response.ok) {
         const data = await response.json()
         if (response.status === 429) {
@@ -63,11 +79,13 @@ export const useChat = (_isOpen: boolean) => {
               ? 'Рады что вы интересуетесь этой темой. Еще больше о дыхании и практиках вы можете узнать у инструктора!)'
               : 'Превышен лимит запросов. Пожалуйста, свяжитесь со мной напрямую для консультации.'
           setBlockReason(reason)
+          removePlaceholder()
           return
         }
 
         if (response.status === 400) {
           setValidationError(data.error || 'Ошибка валидации')
+          removePlaceholder()
           return
         }
 
@@ -76,6 +94,7 @@ export const useChat = (_isOpen: boolean) => {
           data.error ||
             'В данный момент ассистент недоступен. Попробуйте позже или свяжитесь со мной напрямую.'
         )
+        removePlaceholder()
         return
       }
       const headerMaxChars = response.headers.get('x-ai-max-chars')
@@ -93,8 +112,6 @@ export const useChat = (_isOpen: boolean) => {
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let assistantMessage = ''
-
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
       if (reader) {
         try {
@@ -132,12 +149,41 @@ export const useChat = (_isOpen: boolean) => {
         }
       }
     } catch (error: unknown) {
+      setMessages((prev) =>
+        prev.filter(
+          (msg, idx) =>
+            !(
+              idx === prev.length - 1 &&
+              msg.role === 'assistant' &&
+              msg.content === ''
+            )
+        )
+      )
       if (!isBlocked && !serviceUnavailable) {
         setServiceUnavailable(true)
+        let errorMessage = 'Ошибка при получении ответа.'
+
+        if (error instanceof Error) {
+          if (
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('NetworkError') ||
+            error.message.includes('Network request failed')
+          ) {
+            errorMessage =
+              'Проблемы с подключением к интернету. Проверьте соединение и попробуйте снова.'
+          } else if (
+            error.message.includes('timeout') ||
+            error.message.includes('Timeout')
+          ) {
+            errorMessage =
+              'Превышено время ожидания ответа от сервера. Попробуйте позже.'
+          } else {
+            errorMessage = error.message
+          }
+        }
+
         setBlockReason(
-          error instanceof Error
-            ? error.message
-            : 'Ошибка при получении ответа.'
+          `${errorMessage} Сервис недоступен. Для получения информации свяжитесь со мной напрямую.`
         )
       }
     } finally {

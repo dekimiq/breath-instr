@@ -110,16 +110,6 @@ const Chat: React.FC = () => {
                 <ChatMessage key={index} message={msg} />
               ))}
 
-              {isLoading && !messages[messages.length - 1]?.content && (
-                <div className={`${styles.message} ${styles.assistant}`}>
-                  <div className={styles.typing}>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              )}
-
               {(isBlocked || serviceUnavailable) && blockReason && (
                 <div className={`${styles.message} ${styles.system}`}>
                   <ContactBlock
