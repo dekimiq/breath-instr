@@ -1,3 +1,28 @@
+# !========== Prod ==========! 
+
+# Первый деплой: сборка образа + поднятие всего стека
+prod:
+	docker compose up -d --build
+
+# Пересобрать только app-контейнер и перезапустить без даунтайма остальных
+rebuild:
+	docker compose build app
+	docker compose up -d --no-deps app
+
+# Полная остановка стека
+stop:
+	docker compose down
+
+# Логи всего стека
+logs:
+	docker compose logs -f
+
+# Логи конкретного сервиса: make logs-s s=nginx
+logs-s:
+	docker compose logs -f $(s)
+
+# !========== Dev ==========! 
+
 install:
 	npm install
 
@@ -5,7 +30,7 @@ run:
 	npm run dev
 
 dev:
-	docker compose up -d
+	docker compose up -d postgres
 	npm run dev
 
 down:
@@ -31,6 +56,12 @@ db-setup:
 	npx drizzle-kit push
 
 seed:
+	npx tsx src/db/seed.ts
+
+# Прод: применить схему и создать админа (запускать один раз после make prod)
+# Логин и пароль будут выведены в консоль
+prod-seed:
+	npx drizzle-kit push
 	npx tsx src/db/seed.ts
 
 setup:

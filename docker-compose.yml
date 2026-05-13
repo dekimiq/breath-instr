@@ -11,6 +11,106 @@ services:
       - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: breath_instr_pg_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      - postgres
+    networks:
+      - internal
+
+  app:
+    build: .
+    container_name: breath_instr_app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    depends_on:
+      - postgres
+    networks:
+      - internal
+
+  apache:
+    image: httpd:2.4-alpine
+    container_name: breath_instr_apache
+    restart: unless-stopped
+    volumes:
+      - ./infra/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      - ./infra/apache/vhost.conf:/usr/local/apache2/conf/extra/vhost.conf:ro
+    depends_on:
+      - app
+    networks:
+      - internal
+      - web
+
+  nginx:
+    image: jonasal/nginx-certbot:latest
+    container_name: breath_instr_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL}
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/default.conf:/etc/nginx/user_conf.d/default.conf:ro
+      - ./.next/static:/var/www/html/_next/static:ro
+      - ./public:/var/www/html/public:ro
+      - nginx_secrets:/etc/letsencrypt
+    depends_on:
+      - apache
+    networks:
+      - web
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: breath_instr_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infra/metrics/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - internal
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: breath_instr_grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/metrics/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - internal
+
+networks:
+  web:
+    driver: bridge
+  internal:
+    driver: bridge
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
+  nginx_secrets:
