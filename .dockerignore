@@ -1,0 +1,16 @@
+.git
+.gitignore
+.next
+node_modules
+out
+
+# Конфиги разработки
+.env
+.env.local
+.env.development
+.eslintrc*
+.prettierrc*
+.husky
+
+# Инфра и документация
+infra
