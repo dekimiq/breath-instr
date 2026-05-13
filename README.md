@@ -1,36 +1,149 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# breath-instr
 
-## Getting Started
+Лендинг с ИИ (чат с помошником)
 
-First, run the development server:
+## Стек
+
+- **Next.js 16** (standalone SSR) — фронт + API routes
+- **PostgreSQL 16** — база данных
+- **Nginx** — точка входа, TLS termination, статика
+- **Apache** — reverse proxy, SSE pass-through
+- **Prometheus + Grafana** — мониторинг
+
+---
+
+## Локальная разработка
+
+### Требования
+
+- Node.js 22+
+- Docker + Docker Compose
+
+### Быстрый старт
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Клонируем и устанавливаем зависимости
+git clone <repo>
+cd breath-instr
+npm install
+
+# 2. Копируем переменные окружения
+cp .env.example .env
+# Заполнить .env: OPENROUTER_API_KEY, JWT_SECRET и остальное
+
+# 3. Поднимаем БД и запускаем dev-сервер
+make dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение доступно на [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Переменные окружения
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Переменная | Описание |
+|---|---|
+| `OPENROUTER_API_KEY` | API ключ OpenRouter |
+| `JWT_SECRET` | 32-байтный hex-секрет для JWT (64 символа) |
+| `POSTGRES_USER` | Пользователь БД |
+| `POSTGRES_PASSWORD` | Пароль БД |
+| `POSTGRES_DB` | Имя базы данных |
+| `DATABASE_URL` | Полный connection string PostgreSQL |
+| `DOMAIN` | Домен сайта (для прода) |
+| `GRAFANA_USER` | Логин Grafana (для прода) |
+| `GRAFANA_PASSWORD` | Пароль Grafana (для прода) |
 
-## Learn More
+Сгенерировать `JWT_SECRET`:
+```bash
+openssl rand -hex 32
+```
 
-To learn more about Next.js, take a look at the following resources:
+### База данных
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Применить схему
+make db-setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Заполнить начальными данными
+make seed
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Деплой на VPS
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Требования
+
+- Ubuntu 22.04+
+- Docker + Docker Compose
+- Домен с DNS A-записью
+
+### 1. Подготовка сервера
+
+```bash
+# Клонируем репозиторий
+git clone <repo>
+cd breath-instr
+
+# Копируем и заполняем переменные
+cp .env.example .env
+nano .env
+```
+
+Обязательно заполнить в `.env`:
+```env
+DOMAIN=yourdomain.com
+OPENROUTER_API_KEY=...
+JWT_SECRET=...          # openssl rand -hex 32
+POSTGRES_PASSWORD=...   # сильный пароль
+GRAFANA_PASSWORD=...    # сильный пароль
+```
+
+### 2. Первый запуск
+
+```bash
+make prod
+```
+
+При старте `jonasal/nginx-certbot` автоматически запрашивает сертификат Let's Encrypt для домена из `DOMAIN` и в дальнейшем обновляет его сам. Ручных действий с SSL не требуется.
+
+> Первый старт может занять 1-2 минуты — контейнер генерирует Diffie-Hellman параметры.
+
+### 3. Инициализация БД и создание админа
+
+Запускается на сервере (не внутри контейнера) — нужен Node.js 22+ и `npm install` на хосте. `DATABASE_URL` в `.env` должен указывать на `localhost:5435`.
+
+```bash
+npm install        # если ещё не установлено
+make prod-seed
+```
+
+Команда применит схему и создаст администратора. В консоли появится:
+
+```
+✅ Admin user created:
+   Login: admin_a1b2c3
+   Password: d4e5f6a7b8c9d0e1
+```
+
+**Это логин и пароль от админки, нужно сохранить**.
+
+Сайт доступен на `https://yourdomain.com`.
+
+### Пересборка после изменений
+
+```bash
+# Пересобрать и перезапустить только app (nginx/apache/БД не трогаем)
+make rebuild
+```
+
+### Полезные команды
+
+```bash
+make logs           # логи всего стека
+make logs-s s=nginx # логи конкретного сервиса
+make stop           # остановить стек
+```
+
+### Мониторинг
+
+Grafana доступна на `http://your-server-ip:3001`  
+Логин/пароль — из `.env` (`GRAFANA_USER` / `GRAFANA_PASSWORD`).
