@@ -31,6 +31,7 @@ services:
     restart: unless-stopped
     volumes:
       - next_static:/app/.next/static
+      - next_cache:/app/.next/cache
     environment:
       DATABASE_URL: ${DATABASE_URL}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
@@ -119,3 +120,4 @@ volumes:
   grafana_data:
   nginx_secrets:
   next_static:
+  next_cache:
