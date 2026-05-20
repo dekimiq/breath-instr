@@ -15,21 +15,24 @@ export const SmoothScroll = ({ children }: { children: ReactNode }) => {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1,
-      touchMultiplier: 2,
+      touchMultiplier: 1.5,
       infinite: false,
     })
 
     lenisRef.current = lenis
     window.lenis = lenis
 
+    let rafId: number
+
     function raf(time: number) {
       lenis.raf(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
     return () => {
       lenis.destroy()
+      cancelAnimationFrame(rafId)
       window.lenis = undefined
     }
   }, [])
