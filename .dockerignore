@@ -12,5 +12,5 @@ out
 .prettierrc*
 .husky
 
-# Инфра и документация
+# Инфра
 infra
