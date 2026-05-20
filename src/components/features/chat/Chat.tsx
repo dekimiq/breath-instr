@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, X } from 'lucide-react'
+import { MessageCircle, X, ShieldAlert } from 'lucide-react'
 
 import { useScrollTo } from '@/hooks/useScrollTo'
+
+import { useConsentStore } from '@/store/consent'
 
 import styles from './Chat.module.scss'
 import { ChatHeader } from './components/ChatHeader'
@@ -17,6 +19,11 @@ import { useChat } from './hooks/useChat'
 const Chat: React.FC = () => {
   const scrollTo = useScrollTo()
   const [isOpen, setIsOpen] = useState(false)
+  const hasAccepted = useSyncExternalStore(
+    useConsentStore.subscribe,
+    () => useConsentStore.getState().hasAccepted,
+    () => null
+  )
   const {
     messages,
     inputValue,
@@ -97,11 +104,24 @@ const Chat: React.FC = () => {
               className={styles.chatMessages}
               onWheel={(e) => e.stopPropagation()}
             >
-              {messages.length === 0 && !isBlocked && !serviceUnavailable && (
+              {messages.length === 0 &&
+                !isBlocked &&
+                !serviceUnavailable &&
+                hasAccepted !== false && (
+                  <div className={styles.emptyState}>
+                    <p>
+                      Привет! Я помогу тебе разобраться в дыхании. Задай свой
+                      вопрос!
+                    </p>
+                  </div>
+                )}
+
+              {hasAccepted === false && (
                 <div className={styles.emptyState}>
-                  <p>
-                    Привет! Я помогу тебе разобраться в дыхании. Задай свой
-                    вопрос!
+                  <ShieldAlert size={48} color="#ff4d4d" />
+                  <p style={{ marginTop: '1rem', color: '#ff4d4d' }}>
+                    Для использования чата необходимо принять Пользовательское
+                    соглашение.
                   </p>
                 </div>
               )}
@@ -127,7 +147,7 @@ const Chat: React.FC = () => {
               onChange={setInputValue}
               onSend={sendMessage}
               isLoading={isLoading}
-              isBlocked={isBlocked}
+              isBlocked={isBlocked || hasAccepted === false}
               serviceUnavailable={serviceUnavailable}
               validationError={validationError}
               maxChars={MAX_CHARS}

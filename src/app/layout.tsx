@@ -2,6 +2,7 @@ import { SmoothScroll } from '@/providers/SmoothScroll'
 import type { Metadata } from 'next'
 
 import { ChatWrapper } from '@/components/features/chat/ChatWrapper'
+import { ConsentBanner } from '@/components/features/ConsentBanner/ConsentBanner'
 
 import '@/styles/globals.scss'
 
@@ -21,6 +22,7 @@ export default function RootLayout({
         <SmoothScroll>
           {children}
           <ChatWrapper />
+          <ConsentBanner />
         </SmoothScroll>
       </body>
     </html>
