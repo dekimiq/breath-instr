@@ -4,8 +4,8 @@ import { Pool } from 'pg'
 import * as schema from './schema'
 
 const pool = new Pool({
-  host: 'localhost',
-  port: 5435,
+  host: process.env.DB_HOST || 'postgres',
+  port: Number(process.env.DB_PORT) || 5432,
   user: process.env.POSTGRES_USER || 'admin',
   password: process.env.POSTGRES_PASSWORD || 'postgres_password_123',
   database: process.env.POSTGRES_DB || 'breath_instr',
