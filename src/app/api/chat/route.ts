@@ -5,12 +5,13 @@ import { aiUsage, settings } from '@/db/schema'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { streamText } from 'ai'
 import axios from 'axios'
-import { eq, sql } from 'drizzle-orm'
+import { eq, lt, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 const REQUEST_TIMEOUT = 15000
 const MAX_CHARS_USER = 128
 const MAX_CHARS_AI_CONTEXT = MAX_CHARS_USER * 2
+const MS_IN_DAY = 24 * 60 * 60 * 1000
 
 interface ChatHistoryMessage {
   role: 'user' | 'assistant'
@@ -150,12 +151,12 @@ export async function POST(req: Request) {
     const forwardedFor = headersList.get('x-forwarded-for')
     const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1'
 
-    const isLocalhost = true
-    // const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
+    // const isLocalhost = true
+    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
 
     const now = new Date()
     const resetThreshold = new Date(
-      now.getTime() - safeConfig.resetDays * 24 * 60 * 60 * 1000
+      now.getTime() - safeConfig.resetDays * MS_IN_DAY
     )
     const todayDateStr = now.toISOString().split('T')[0]
 
@@ -227,10 +228,33 @@ export async function POST(req: Request) {
                 requestCount: 1,
               })
             }
-            console.log(`[AI API] Usage recorded for IP: ${ip}`)
+            console.log(`[AI API] Использование сохранено для: ${ip}`)
+
+            // Удаляем старые записи (старше resetDays * 2)
+            const deletionNow = new Date()
+            const deletionCutoff = new Date(
+              deletionNow.getTime() - safeConfig.resetDays * 2 * MS_IN_DAY
+            )
+            const deletionCutoffDate = deletionCutoff
+              .toISOString()
+              .split('T')[0]
+
+            try {
+              const deleteResult = await db
+                .delete(aiUsage)
+                .where(lt(aiUsage.date, deletionCutoffDate))
+
+              if (deleteResult.rowCount && deleteResult.rowCount > 0) {
+                console.log(
+                  `[AI API] Удаление ${deleteResult.rowCount} старых IP, страше ${safeConfig.resetDays * 2} дней`
+                )
+              }
+            } catch (deleteError) {
+              console.error('[AI API] Ошибка удаления IP:', deleteError)
+            }
           } catch (dbError) {
             console.error(
-              '[AI API] Failed to record usage in onFinish:',
+              '[AI API] Ошибка записи использования в onFinish:',
               dbError
             )
           }
