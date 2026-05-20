@@ -63,7 +63,7 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/default.conf:/etc/nginx/user_conf.d/default.conf.template:ro
+      - ./infra/nginx/default.conf:/etc/nginx/user_conf.d/default.conf:ro
       - ./.next/static:/var/www/html/_next/static:ro
       - ./public:/var/www/html/public:ro
       - nginx_secrets:/etc/letsencrypt
