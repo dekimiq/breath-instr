@@ -10,13 +10,22 @@ export const Footer: React.FC = () => {
           &copy; {new Date().getFullYear()} Breathing Instructor. All rights
           reserved.
         </p>
-        <a
-          href="/privacy-policy"
-          target="_blank"
-          className={styles.privacyLink}
-        >
-          Политика конфиденциальности
-        </a>
+        <div className={styles.links}>
+          <a
+            href="/privacy-policy"
+            target="_blank"
+            className={styles.privacyLink}
+          >
+            Политика конфиденциальности
+          </a>
+          <a
+            href="/user-agreement"
+            target="_blank"
+            className={styles.privacyLink}
+          >
+            Пользовательское соглашение
+          </a>
+        </div>
       </div>
     </footer>
   )

@@ -16,6 +16,13 @@
     color: #333;
   }
 
+  .links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
   .privacyLink {
     display: inline-block;
     font-size: 0.85rem;
