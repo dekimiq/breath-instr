@@ -50,6 +50,7 @@ make dev
 | `DOMAIN` | Домен сайта (для прода) |
 | `GRAFANA_USER` | Логин Grafana (для прода) |
 | `GRAFANA_PASSWORD` | Пароль Grafana (для прода) |
+| `ENCRYPTION_KEY` | 32-символьный ключ для шифрования токенов в БД |
 
 Сгенерировать `JWT_SECRET`:
 ```bash
@@ -95,6 +96,7 @@ OPENROUTER_API_KEY=...
 JWT_SECRET=...          # openssl rand -hex 32
 POSTGRES_PASSWORD=...   # сильный пароль
 GRAFANA_PASSWORD=...    # сильный пароль
+ENCRYPTION_KEY=...      # 32 символа для шифрования токенов
 ```
 
 ### 2. Первый запуск
