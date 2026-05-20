@@ -9,12 +9,8 @@ import html from 'remark-html'
 
 import { AnimatedButton } from '@/components/ui/AnimatedButton/AnimatedButton'
 
-
 async function getPrivacyPolicyContent() {
-  const filePath = path.join(
-    process.cwd(),
-    'src/assets/images/privacy-policy.md'
-  )
+  const filePath = path.join(process.cwd(), 'docs/privacy-policy.md')
   const fileContents = fs.readFileSync(filePath, 'utf8')
 
   const content = fileContents.replace(/^---[\s\S]*?---/, '')
