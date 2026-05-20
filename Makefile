@@ -61,7 +61,7 @@ seed:
 # Прод: применить схему и создать админа (запускать один раз после make prod)
 # Логин и пароль будут выведены в консоль
 prod-seed:
-  docker compose run --rm migrate
+	docker compose run --rm migrate
 
 setup:
 	docker compose up -d
