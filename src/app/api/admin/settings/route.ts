@@ -1,5 +1,6 @@
 import { db } from '@/db'
 import { settings } from '@/db/schema'
+import { decrypt, encrypt, isEncrypted } from '@/lib/crypto'
 import axios from 'axios'
 import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
@@ -7,7 +8,15 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   try {
     const allSettings = await db.select().from(settings)
-    return NextResponse.json(allSettings)
+
+    const decryptedSettings = allSettings.map((s) => {
+      if (s.key === 'AI_API_KEY' && isEncrypted(s.value)) {
+        return { ...s, value: decrypt(s.value) }
+      }
+      return s
+    })
+
+    return NextResponse.json(decryptedSettings)
   } catch (error) {
     console.error('[Settings API] GET error:', error)
     return NextResponse.json(
@@ -52,9 +61,15 @@ export async function PATCH(request: Request) {
       }
 
       for (const item of body) {
+        let finalValue = String(item.value)
+
+        if (item.key === 'AI_API_KEY' && finalValue) {
+          finalValue = encrypt(finalValue)
+        }
+
         await db
           .update(settings)
-          .set({ value: String(item.value) })
+          .set({ value: finalValue })
           .where(eq(settings.key, item.key))
       }
 
@@ -93,9 +108,15 @@ export async function PATCH(request: Request) {
       }
     }
 
+    let finalValue = String(value)
+
+    if (key === 'AI_API_KEY' && finalValue) {
+      finalValue = encrypt(finalValue)
+    }
+
     await db
       .update(settings)
-      .set({ value: String(value) })
+      .set({ value: finalValue })
       .where(eq(settings.key, key))
 
     return NextResponse.json({ success: true })

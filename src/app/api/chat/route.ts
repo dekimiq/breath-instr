@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { db } from '@/db'
 import { aiUsage, settings } from '@/db/schema'
+import { decrypt, isEncrypted } from '@/lib/crypto'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { streamText } from 'ai'
 import axios from 'axios'
@@ -56,7 +57,12 @@ async function getAISettings(): Promise<Partial<AISettings>> {
   const config: Partial<AISettings> = {}
 
   allSettings.forEach((s) => {
-    const val = s.value as string
+    let val = s.value as string
+
+    if (s.key === 'AI_API_KEY' && isEncrypted(val)) {
+      val = decrypt(val)
+    }
+
     if (s.key === 'AI_BASE_URL') config.baseUrl = val as string
     else if (s.key === 'AI_API_KEY') config.apiKey = val as string
     else if (s.key === 'AI_IP_LIMIT') config.ipLimit = Number(val)
