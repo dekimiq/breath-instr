@@ -25,7 +25,7 @@ export const ContactBlock: React.FC<ContactBlockProps> = ({
         </button>
       )}
       <a
-        href="https://t.me/breathing_expert"
+        href="https://t.me/Ole_peace"
         target="_blank"
         rel="noopener noreferrer"
         className={`${styles.contactBtn} ${styles.telegram}`}

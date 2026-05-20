@@ -25,13 +25,13 @@ export const Contacts: React.FC = () => {
           transition={{ duration: 0.5 }}
         >
           <ContactButton
-            href="#"
+            href="https://t.me/Ole_peace"
             title="Телеграм канал с полезной информацией"
           />
           <ContactButton href="#" title="Личная консультация по вопросам" />
           <ContactButton
-            href="#"
-            title="Попробовать дышать вместе - записаться"
+            href="https://t.me/tochka_tishi"
+            title="Дышать вместе - тг канал"
           />
         </motion.div>
       </div>
