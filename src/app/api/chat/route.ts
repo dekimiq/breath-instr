@@ -319,7 +319,9 @@ export async function POST(req: Request) {
     const isTimeout = error.name === 'AbortError'
     return new Response(
       JSON.stringify({
-        error: isTimeout ? 'Превышено время ожидания.' : 'Ошибка сервера.',
+        error: isTimeout
+          ? 'Превышено время ожидания. Вы можете обратиться напрямую.'
+          : 'Сервис временно недоступен. Вы можете обратиться напрямую.',
       }),
       {
         status: isTimeout ? 504 : 500,
