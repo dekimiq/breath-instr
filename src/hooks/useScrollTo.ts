@@ -18,8 +18,7 @@ export const useScrollTo = () => {
         })
       } else {
         const elementPosition = element.getBoundingClientRect().top
-        const offsetPosition =
-          elementPosition + window.pageYOffset - headerOffset
+        const offsetPosition = elementPosition + window.scrollY - headerOffset
 
         window.scrollTo({
           top: offsetPosition,

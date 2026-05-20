@@ -52,7 +52,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ links }) => {
 
     setTimeout(() => {
       scrollTo(href)
-    }, 300)
+    }, 400)
   }
 
   if (!mounted) return null
