@@ -5,7 +5,6 @@ import { aiUsage, settings } from '@/db/schema'
 import { decrypt, isEncrypted } from '@/lib/crypto'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { streamText } from 'ai'
-import axios from 'axios'
 import { eq, lt, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
@@ -113,42 +112,6 @@ export async function POST(req: Request) {
     const openrouter = createOpenRouter({
       apiKey: safeConfig.apiKey,
       baseURL: safeConfig.baseUrl,
-      fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = input.toString()
-        const method = init?.method || 'GET'
-
-        try {
-          const axiosResponse = await axios({
-            url,
-            method,
-            headers: init?.headers as Record<string, string>,
-            data: init?.body,
-            responseType: 'arraybuffer',
-            validateStatus: () => true,
-          })
-
-          const response = new Response(axiosResponse.data, {
-            status: axiosResponse.status,
-            statusText: axiosResponse.statusText,
-            headers: axiosResponse.headers as Record<string, string>,
-          })
-
-          if (!response.ok) {
-            const errorBody = new TextDecoder().decode(axiosResponse.data)
-            console.error(`[AI API] Request Failed:`, {
-              status: response.status,
-              statusText: response.statusText,
-              url,
-              body: errorBody.slice(0, 500),
-            })
-          }
-
-          return response
-        } catch (axiosError) {
-          console.error(`[AI API] Axios Exception for ${url}:`, axiosError)
-          throw axiosError
-        }
-      },
     })
 
     const validatedHistory = Array.isArray(history) ? history.slice(-4) : []
