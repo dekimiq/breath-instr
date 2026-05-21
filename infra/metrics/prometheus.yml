@@ -15,14 +15,8 @@ scrape_configs:
 
   - job_name: 'apache'
     static_configs:
-      - targets: ['apache:8080']
-    metrics_path: '/server-status'
+      - targets: ['apache-exporter:9117']
 
   - job_name: 'postgres'
     static_configs:
       - targets: ['postgres-exporter:9187']
-
-  - job_name: 'app'
-    static_configs:
-      - targets: ['app:3000']
-    metrics_path: '/api/metrics'
