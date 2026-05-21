@@ -7,7 +7,9 @@ prod:
 # Пересобрать только app-контейнер и перезапустить без даунтайма остальных
 rebuild:
 	docker compose build app
-	docker compose up -d --no-deps app
+	docker compose down
+	docker volume rm breath-instr_next_static
+	docker compose up -d
 
 # Полная остановка стека
 stop:

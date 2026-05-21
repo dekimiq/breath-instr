@@ -52,9 +52,13 @@ make dev
 | `GRAFANA_PASSWORD` | Пароль Grafana (для прода) |
 | `ENCRYPTION_KEY` | 32-символьный ключ для шифрования токенов в БД |
 
-Сгенерировать `JWT_SECRET`:
+Сгенерировать `JWT_SECRET` и `ENCRYPTION_KEY`:
 ```bash
+# Для JWT_SECRET (64 символа hex)
 openssl rand -hex 32
+
+# Для ENCRYPTION_KEY (ровно 32 символа)
+openssl rand -base64 32 | cut -c1-32
 ```
 
 ### База данных
@@ -111,10 +115,9 @@ make prod
 
 ### 3. Инициализация БД и создание админа
 
-Запускается на сервере (не внутри контейнера) — нужен Node.js 22+ и `npm install` на хосте. `DATABASE_URL` в `.env` должен указывать на `localhost:5435`.
+Запускается на сервере. Команда выполнит миграции и создаст админа внутри запущенного контейнера `app`.
 
 ```bash
-npm install        # если ещё не установлено
 make prod-seed
 ```
 
