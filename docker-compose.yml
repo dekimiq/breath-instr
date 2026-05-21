@@ -109,6 +109,18 @@ services:
       - web
       - internal
 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: breath_instr_nginx_exporter
+    restart: unless-stopped
+    command:
+      - '--nginx.scrape-uri=http://nginx/stub_status'
+    depends_on:
+      - nginx
+    networks:
+      - internal
+      - web
+
   prometheus:
     image: prom/prometheus:latest
     container_name: breath_instr_prometheus
