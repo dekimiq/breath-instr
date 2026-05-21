@@ -93,6 +93,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8080:8080"
     environment:
       CERTBOT_EMAIL: ${CERTBOT_EMAIL}
       CERTBOT_DOMAINS: ${DOMAIN}
@@ -114,7 +115,7 @@ services:
     container_name: breath_instr_nginx_exporter
     restart: unless-stopped
     command:
-      - '--nginx.scrape-uri=http://nginx/stub_status'
+      - '--nginx.scrape-uri=http://nginx:8080/stub_status'
     depends_on:
       - nginx
     networks:
