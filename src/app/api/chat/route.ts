@@ -249,7 +249,7 @@ export async function POST(req: Request) {
             fullText.toLowerCase().includes(keyword)
           )
           const alreadyHasDisclaimer = fullText.includes(
-            MEDICAL_DISCLAIMER.trim()
+            'Не является медицинской консультацией'
           )
 
           if (
