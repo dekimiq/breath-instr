@@ -8,7 +8,8 @@ import '@/styles/globals.scss'
 
 export const metadata: Metadata = {
   title: 'Vspolohi',
-  description: 'Дыхание - инструмент для решения проблем.',
+  description:
+    'Дыхание — эффективный инструмент для снятия стресса, тревоги и восстановления энергии. Пройдите консультацию у специалиста по дыхательным практикам и верните контроль над своим состоянием.',
 }
 
 export default function RootLayout({
