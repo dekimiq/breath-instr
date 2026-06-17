@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, ShieldAlert } from 'lucide-react'
+import Link from 'next/link'
 
 import { useScrollTo } from '@/hooks/useScrollTo'
 
@@ -117,12 +118,26 @@ const Chat: React.FC = () => {
                 )}
 
               {hasAccepted === false && (
-                <div className={styles.emptyState}>
+                <div className={styles.consentBlock}>
                   <ShieldAlert size={48} color="#ff4d4d" />
-                  <p style={{ marginTop: '1rem', color: '#ff4d4d' }}>
+                  <p>
                     Для использования чата необходимо принять Пользовательское
                     соглашение.
                   </p>
+                  <div className={styles.consentLinks}>
+                    <Link href="/privacy-policy">
+                      Политика конфиденциальности
+                    </Link>
+                    <Link href="/user-agreement">
+                      Пользовательское соглашение
+                    </Link>
+                  </div>
+                  <button
+                    className={styles.acceptBtn}
+                    onClick={() => useConsentStore.getState().setConsent(true)}
+                  >
+                    Принять
+                  </button>
                 </div>
               )}
 
