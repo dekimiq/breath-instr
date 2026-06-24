@@ -103,8 +103,9 @@ export const useChat = (_isOpen: boolean) => {
 
       if (headerMaxChars) setMaxChars(Number(headerMaxChars))
       if (headerLimitTotal && headerLimitRemaining) {
+        const remaining = Math.max(0, Number(headerLimitRemaining) - 1)
         setLimits({
-          remaining: Number(headerLimitRemaining),
+          remaining,
           total: Number(headerLimitTotal),
         })
       }
